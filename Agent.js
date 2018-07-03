@@ -10,14 +10,16 @@
 //status = 0 is alive, 1 is dead
 //birthcycle controls population addition
 //age is self explanatory
-var Agent = function(x,y, id, year)
+var Agent = function(x,y, id, year, parent)
 {
 
 
 	this.x =x;
 	this.y =y;
+	this.startX = x;
+	this.startY =y;
 	this.id = id;
-	this.food = 10;
+	this.food = 5;
 	this.metab = 1;
 	this.spaceResources = 0;
 	this.surviveNum = 1;
@@ -26,10 +28,32 @@ var Agent = function(x,y, id, year)
 	this.birthCycle = 0;
 	this.age = 0;
 	this.yearSpawned =year;
+	this.deathYear = 0;
+	this.parent = parent; //This is for tracking "families"
 	
+
+	//These are just diagnostic variables
+	this.gathered = 0;
+	this.ate = 0;
+	this.moved =0;
+	
+	this.turn = function()
+	{
+		
+		//First gather food
+		this.gather();
+		//Then eat
+		this.eat();
+		//Then if no resources left move
+		
+
+
+	}
+
+
 	this.gather = function()
 	{
-
+			this.gathered++;
 			spaces[this.x][this.y].agentPresent =1;
 			if(spaces[this.x][this.y].resources >= 2)// && this.food < 15)
 			{
@@ -45,7 +69,7 @@ var Agent = function(x,y, id, year)
 			{
 				if(this.food <= 10)
 					this.move(this.findBestAdj());
-				else
+				else if(spaces[this.x][this.y].resources <= 30)
 				{
 					this.food -= 2;
 					spaces[this.x][this.y].resources += 2;
@@ -60,13 +84,17 @@ var Agent = function(x,y, id, year)
 	{
 		if(this.food > 0)
 		{
-			this.food -= this.metab;
-			globalResources -= this.metab;
-			resourcesUsed += this.metab;
-			this.totalFoodConsumed += this.metab;
+			this.ate++;
+			this.food -= 1;
+			globalResources -= 1;
+			resourcesUsed += 1;
+			this.totalFoodConsumed += 1;
+			this.deathYear++;
 		//	document.write("Food left here: " + spaces[this.x][this.y].resources + "<br>")
-		//	document.write("I have this much food: " + this.food + "<br><br>")
+		//document.write("I have this much food: " + this.food + "<br><br>")
 		}
+		else
+			this.status = 1;
 	}
 	
 	this.findBestAdj = function()
@@ -144,10 +172,11 @@ var Agent = function(x,y, id, year)
 	
 			//This array contains all the adjacent squares, and then sorts them based on the cost
 			var costs = [up, down, left, right];
-			costs.sort(function(b, a) {return b.cost-a.cost;});
+			costs.sort(function(a, b) {return b.cost-a.cost;});
 
 			return costs;
 	}
+
 	//Finds the best adjacent spot based on resource cost and then moves the agent there
 	this.move = function(costs)
 	{
@@ -160,59 +189,24 @@ var Agent = function(x,y, id, year)
 
 				if(spaces[x][y].agentPresent == 0)
 				{
+
 					spaces[this.x][this.y].agentPresent = 0;
 					spaces[this.x][this.y].terrain = 10;
 					this.x = x;
 					this.y = y;
 					this.spaceResources = spaces[x][y].resources;
 					spaces[this.x][this.y].agentPresent = 1;
-					//spaces[this.x][this.y].draw(0xff0000);
 					spaces[this.x][this.y].terrain = 11;
+					this.moved++;
 					return;
 				}
 			}
-
-				/*if(newSpot.cost == up.cost)
-				{
-					newSpot.x = up.x;
-					newSpot.y = up.y;
-				}
-				else if(newSpot.cost == down.cost)
-				{
-					newSpot.x = down.x;
-					newSpot.y = down.y;
-				}
-				else if(newSpot.cost == right.cost)
-				{
-					newSpot.x = right.x;
-					newSpot.y = right.y;
-				}
-				else if(newSpot.cost == left.cost)
-				{
-					newSpot.x = left.x;
-					newSpot.y = left.y;
-				}
-				else
-					document.write("SOMETHING WENT HORRIBLY WRONG <br><br>");
-			
-			if(spaces[newSpot.x][newSpot.y].agentPresent == 0)
-			{
-				spaces[this.x][this.y].agentPresent = 0;
-				spaces[this.x][this.y].terrain = 10;
-				this.x = newSpot.x;
-				this.y = newSpot.y;
-				this.spaceResources = spaces[newSpot.x][newSpot.y].resources;
-				spaces[this.x][this.y].agentPresent = 1;
-				spaces[this.x][this.y].draw(0xff0000);
-				spaces[this.x][this.y].terrain = 11;
-			}*/
-			
 	}
 
 	this.live = function()
 	{
 		//Less than 100 results in basically a dead simulation, unsure why
-		if(this.age == 100)
+		if(this.age == 75)
 		{
 			this.status = 1;
 			spaces[this.x][this.y].resources += this.food;

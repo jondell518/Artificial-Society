@@ -1,7 +1,7 @@
 var spaces = [];
 var globalResources =0;
 var resourcesUsed = 0;
-var globalSpawned = 1;
+var globalSpawned = 4;
 var globalDead = 0;
 
 
@@ -25,6 +25,7 @@ var space = function(x,y,type, resources)
 	this.terrain = type;
 	this.resources = resources;
 	this.agentPresent = 0;
+	this.locked = 0; //Represents the cell being locked for purposes of seeding a map
 	
 
 	this.calcAdj = function()
